@@ -1,6 +1,6 @@
 # 📎 EasyLinks
 
-Sistema desenvolvido em Angular para **armazenamento inteligente de links**, oferecendo uma solução prática e intuitiva para organizar conteúdos digitais de forma rápida, segura e acessível.
+Sistema desenvolvido em React para **armazenamento inteligente de links**, oferecendo uma solução prática e intuitiva para organizar conteúdos digitais de forma rápida, segura e acessível.
 
 ---
 
@@ -36,7 +36,7 @@ A plataforma é ideal para:
 
 | Tecnologia         | Finalidade                                                                                                   |
 | ------------------ | ------------------------------------------------------------------------------------------------------------ |
-| **Angular**        | Framework frontend para construção da interface de usuário.                                                  |
+| **React**        | Framework frontend para construção da interface de usuário.                                                  |
 | **TypeScript**     | Superset do JavaScript que adiciona tipagem estática, facilitando a manutenção e escalabilidade de projetos. |
 | **Tailwind CSS**   | Estilização rápida, responsiva e moderna.                                                                    |
 | **Docker**         | Containerização da aplicação.                                                                                |
@@ -94,22 +94,6 @@ Recursos em desenvolvimento:
 * 🔎 Busca inteligente por tags e termos;
 * 🛠️ Arquitetura escalável e pronta para produção;
 * 🧩 Modular: fácil de estender com novos tipos de dados ou integrações;
-
----
-
-## 🤝 Contribuição
-
-Contribuições são muito bem-vindas!
-
-Se você deseja propor melhorias, sugerir novas funcionalidades ou corrigir algum problema, sinta-se à vontade para abrir uma issue ou enviar um pull request.
-
-**Como contribuir:**
-
-1. Fork este repositório;
-2. Crie uma branch (`git checkout -b feature/nome-da-feature`);
-3. Faça seus commits (`git commit -m 'feat: minha contribuição'`);
-4. Push para a sua branch (`git push origin feature/nome-da-feature`);
-5. Abra um Pull Request.
 
 ---
 
