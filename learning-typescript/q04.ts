@@ -3,7 +3,7 @@
 
 let arr: number[] = [2,4,6,2,8,9,5]
 
-const arrSlice = (arr: number[]) => {
+export const arrSlice = (arr: number[]) => {
     return arr.slice(0,2)
 }
 

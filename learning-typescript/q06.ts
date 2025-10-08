@@ -8,7 +8,7 @@ interface Description {
   desc(): string;
 }
 
-class Birthday implements Description {
+export class Birthday implements Description {
   name: string;
   birth: string;
 
@@ -22,7 +22,7 @@ class Birthday implements Description {
   }
 }
 
-class Tads implements Description {
+export class Tads implements Description {
   started: string;
   graduate: string;
   
@@ -36,19 +36,3 @@ class Tads implements Description {
     return `Nossa turma de TADS entrou em ${this.started} e iremos nos graduar em ${this.graduate}.`;
   }
 }
-
-const myBirthday = new Birthday("Bernardo", "18/11");
-const myClass = new Tads("2024.1", "2026.2");
-
-console.log(myBirthday.desc()); 
-console.log(myClass.desc()); 
-
-console.log("-----------------------------------------------------------------------")
-
-
-myBirthday.name = "Bernardo Medeiros";
-myClass.graduate = "2027.1";
-
-console.log(myBirthday.desc()); 
-console.log(myClass.desc()); 
-

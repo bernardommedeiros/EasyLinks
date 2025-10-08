@@ -3,7 +3,7 @@ Escreva um teste com o array [8, 3, 9, 5, 6, 12] */
 
 let arr : number[] = [8, 3, 9, 5, 6, 12]
 
-const arrFilter = (arr: number[]) => {
+export const arrFilter = (arr: number[]) => {
     return arr.filter(num => num % 2 == 0)
 }
 

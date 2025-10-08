@@ -3,8 +3,6 @@ Escreva um teste com o array [‘Arrays’, ‘com’, ‘TypeScript’] */
 
 let arrayStrings: string[] = ['Arrays', 'com', 'TypeScript']
 
-const arrayJoin = (arr: string[]) => {
+export const arrayJoin = (arr: string[]) => {
   return arr.join(" ");
 };
-
-console.log(arrayJoin(arrayStrings))
