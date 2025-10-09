@@ -3,11 +3,9 @@ Escreva um teste com o array [‘carro’, ’boneco’, ’ave’, ‘lapis’]
 
 let arr: string[] = ['carro', 'boneco', 'ave', 'lapis']
 
-const arrOrder = (arr: string[]) => {
+export const arrOrder = (arr: string[]) => {
   return arr.sort( (a: string, b: string)=> {
     if (a > b) return -1;
-    return 0;
-  });
-};
-
-console.log(arrOrder(arr))
+    return 0
+  })
+}
