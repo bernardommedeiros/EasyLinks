@@ -6,7 +6,7 @@ type LinkSectionProps = {
 
 export function LinkSection({ title, description, children }: LinkSectionProps) {
   return (
-    <section className="p-6 max-w-5xl mx-auto">
+    <section className="p-6 max-w-5xl mx-auto bg-slate-100">
       <div className="mb-2">
         <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
         {description && <p className="text-sm text-gray-500">{description}</p>}
