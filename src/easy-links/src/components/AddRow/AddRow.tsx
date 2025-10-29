@@ -1,25 +1,30 @@
-import { useState, useEffect } from "react"
-import { TableRow, TableCell } from "@/components/ui/table"
-import { Button } from "@/components/ui/button"
+import { useState, useEffect } from 'react'
+import { TableRow, TableCell } from '@/components/ui/table'
+import { Button } from '@/components/ui/button'
 
 type AddRowProps = {
-  onAdd: (row: { name: string; date: string; link: string; tag: string }) => void
+  onAdd: (row: {
+    name: string
+    date: string
+    link: string
+    tag: string
+  }) => void
 }
 
 export function AddRow({ onAdd }: AddRowProps) {
   const getToday = () => {
     const today = new Date()
     const yyyy = today.getFullYear()
-    const mm = String(today.getMonth() + 1).padStart(2, "0")
-    const dd = String(today.getDate()).padStart(2, "0")
+    const mm = String(today.getMonth() + 1).padStart(2, '0')
+    const dd = String(today.getDate()).padStart(2, '0')
     return `${yyyy}-${mm}-${dd}`
   }
 
   const [newRow, setNewRow] = useState({
-    name: "",
-    date: "",
-    link: "",
-    tag: "",
+    name: '',
+    date: '',
+    link: '',
+    tag: '',
   })
 
   useEffect(() => {
@@ -29,7 +34,7 @@ export function AddRow({ onAdd }: AddRowProps) {
   const handleAdd = () => {
     if (!newRow.name || !newRow.date || !newRow.link || !newRow.tag) return
     onAdd(newRow)
-    setNewRow({ name: "", date: getToday(), link: "", tag: "" })
+    setNewRow({ name: '', date: getToday(), link: '', tag: '' })
   }
 
   return (
