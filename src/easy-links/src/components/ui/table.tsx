@@ -1,7 +1,7 @@
-import * as React from "react"
-import { useState, useEffect } from "react"
-import { cn } from "@/lib/utils"
-import { Edit, Eye, Trash2 } from "lucide-react"
+import * as React from "react";
+import { useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
+import { Edit, Eye, Trash2 } from "lucide-react";
 
 function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
@@ -15,7 +15,7 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
         {...props}
       />
     </div>
-  )
+  );
 }
 
 function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
@@ -25,7 +25,7 @@ function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
       className={cn("[&_tr]:border-b", className)}
       {...props}
     />
-  )
+  );
 }
 
 function TableBody({ className, ...props }: React.ComponentProps<"tbody">) {
@@ -35,7 +35,7 @@ function TableBody({ className, ...props }: React.ComponentProps<"tbody">) {
       className={cn("[&_tr:last-child]:border-0", className)}
       {...props}
     />
-  )
+  );
 }
 
 function TableFooter({ className, ...props }: React.ComponentProps<"tfoot">) {
@@ -48,7 +48,7 @@ function TableFooter({ className, ...props }: React.ComponentProps<"tfoot">) {
       )}
       {...props}
     />
-  )
+  );
 }
 
 function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
@@ -61,7 +61,7 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
       )}
       {...props}
     />
-  )
+  );
 }
 
 function TableHead({ className, ...props }: React.ComponentProps<"th">) {
@@ -74,7 +74,7 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
       )}
       {...props}
     />
-  )
+  );
 }
 
 function TableCell({ className, ...props }: React.ComponentProps<"td">) {
@@ -87,33 +87,33 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
       )}
       {...props}
     />
-  )
+  );
 }
 
 type CellNameProps = {
-  value: string
-  onChange: (newValue: string) => void
-}
+  value: string;
+  onChange: (newValue: string) => void;
+};
 
 function CellName({ value, onChange }: CellNameProps) {
-  const [isEditing, setIsEditing] = useState(false)
-  const [tempValue, setTempValue] = useState(value)
+  const [isEditing, setIsEditing] = useState(false);
+  const [tempValue, setTempValue] = useState(value);
 
   const handleDoubleClick = () => {
-    setIsEditing(true)
-  }
+    setIsEditing(true);
+  };
 
   const handleBlur = () => {
-    setIsEditing(false)
-    onChange(tempValue)
-  }
+    setIsEditing(false);
+    onChange(tempValue);
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
-      setIsEditing(false)
-      onChange(tempValue)
+      setIsEditing(false);
+      onChange(tempValue);
     }
-  }
+  };
 
   return (
     <TableCell onDoubleClick={handleDoubleClick}>
@@ -131,13 +131,13 @@ function CellName({ value, onChange }: CellNameProps) {
         value
       )}
     </TableCell>
-  )
+  );
 }
 
 type CellTagProps = {
-  children: React.ReactNode
-  className?: string
-}
+  children: React.ReactNode;
+  className?: string;
+};
 
 function CellTag({ children, className }: CellTagProps) {
   return (
@@ -152,58 +152,66 @@ function CellTag({ children, className }: CellTagProps) {
         {children}
       </span>
     </td>
-  )
+  );
 }
 
 type CellLinkProps = {
-  href: string
-  onChange: (newHref: string) => void
-  maxLength?: number
-  className?: string
-}
+  href: string;
+  onChange: (newHref: string) => void;
+  maxLength?: number;
+  className?: string;
+};
 
-function CellLink({ href, maxLength = 30, className, onChange }: CellLinkProps) {
-  const [isEditing, setIsEditing] = useState(false)
-  const [tempHref, setTempHref] = useState(href)
+function CellLink({
+  href,
+  maxLength = 30,
+  className,
+  onChange,
+}: CellLinkProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [tempHref, setTempHref] = useState(href);
 
   useEffect(() => {
-    setTempHref(href)
-  }, [href])
+    setTempHref(href);
+  }, [href]);
 
   const getDisplayUrl = (url: string) => {
     try {
-      const parsed = new URL(url)
-      const hostname = parsed.hostname.replace(/^www\./, "")
-      const path = parsed.pathname.replace(/\/$/, "")
-      return `${hostname}${path}`
+      const parsed = new URL(url);
+      const hostname = parsed.hostname.replace(/^www\./, "");
+      const path = parsed.pathname.replace(/\/$/, "");
+      return `${hostname}${path}`;
     } catch {
-      return url
+      return url;
     }
-  }
+  };
 
-  const fullText = getDisplayUrl(href)
-  const shouldTruncate = fullText.length > maxLength
+  const fullText = getDisplayUrl(href);
+  const shouldTruncate = fullText.length > maxLength;
   const displayText = shouldTruncate
     ? fullText.slice(0, maxLength) + "..."
-    : fullText
+    : fullText;
 
-   const handleSubmit = () => {
-    setIsEditing(false)
-    onChange(tempHref)
-  }
+  const handleSubmit = () => {
+    setIsEditing(false);
+    onChange(tempHref);
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
-      handleSubmit()
+      handleSubmit();
     }
-  }
+  };
 
   return (
     <td
       data-slot="table-cell"
-      className={cn("px-4 py-2 text-center align-middle whitespace-nowrap", className)}
+      className={cn(
+        "px-4 py-2 text-center align-middle whitespace-nowrap",
+        className
+      )}
     >
-    {isEditing ? (
+      {isEditing ? (
         <input
           type="text"
           value={tempHref}
@@ -213,45 +221,47 @@ function CellLink({ href, maxLength = 30, className, onChange }: CellLinkProps) 
           autoFocus
           className="border rounded px-2 py-1 text-sm w-full"
         />
-      ) : (<div className="inline-flex items-center justify-center gap-2">
-      <Edit className="w-4 h-4 text-gray-400 cursor-pointer hover:text-gray-700 transition-colors" onClick={() => setIsEditing(true)} />
-      <a
-        target="_blank"
-        href={href}
-        className="hover:underline text-blue-600"
-        title={fullText}
-      >
-      {displayText}
-      </a>
-    </div>
-  )}
+      ) : (
+        <div className="inline-flex items-center justify-center gap-2">
+          <Edit
+            className="w-4 h-4 text-gray-400 cursor-pointer hover:text-gray-700 transition-colors"
+            onClick={() => setIsEditing(true)}
+          />
+          <a
+            target="_blank"
+            href={href}
+            className="hover:underline text-blue-600"
+            title={fullText}
+          >
+            {displayText}
+          </a>
+        </div>
+      )}
     </td>
-  )
+  );
 }
-
 
 type CellDatePickerProps = {
-  value?: string // formato: "YYYY-MM-DD"
-  onChange?: (date: string) => void
-  className?: string
-}
+  value?: string; // formato: "YYYY-MM-DD"
+  onChange?: (date: string) => void;
+  className?: string;
+};
 
-function CellDatePicker({
-  value,
-  onChange,
-  className,
-}: CellDatePickerProps) {
-  const [selectedDate, setSelectedDate] = useState(value || "")
+function CellDatePicker({ value, onChange, className }: CellDatePickerProps) {
+  const [selectedDate, setSelectedDate] = useState(value || "");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSelectedDate(e.target.value)
-    onChange?.(e.target.value)
-  }
+    setSelectedDate(e.target.value);
+    onChange?.(e.target.value);
+  };
 
   return (
     <td
       data-slot="table-cell"
-      className={cn("px-4 py-2 text-center align-middle whitespace-nowrap", className)}
+      className={cn(
+        "px-4 py-2 text-center align-middle whitespace-nowrap",
+        className
+      )}
     >
       <input
         type="date"
@@ -260,20 +270,23 @@ function CellDatePicker({
         className="border rounded px-2 py-1 text-sm text-gray-700 cursor-pointer"
       />
     </td>
-  )
+  );
 }
 
 type CellActionsProps = {
-  onView?: () => void
-  onDelete?: () => void
-  className?: string
-}
+  onView?: () => void;
+  onDelete?: () => void;
+  className?: string;
+};
 
 function CellActions({ onView, onDelete, className }: CellActionsProps) {
   return (
     <td
       data-slot="table-cell"
-      className={cn("px-4 py-2 text-center align-middle whitespace-nowrap", className)}
+      className={cn(
+        "px-4 py-2 text-center align-middle whitespace-nowrap",
+        className
+      )}
     >
       <div className="inline-flex items-center justify-center gap-3 text-gray-600">
         <button onClick={onView} title="Visualizar">
@@ -284,9 +297,8 @@ function CellActions({ onView, onDelete, className }: CellActionsProps) {
         </button>
       </div>
     </td>
-  )
+  );
 }
-
 
 function TableCaption({
   className,
@@ -298,7 +310,7 @@ function TableCaption({
       className={cn("text-muted-foreground mt-4 text-sm", className)}
       {...props}
     />
-  )
+  );
 }
 
 export {
@@ -315,4 +327,4 @@ export {
   CellDatePicker,
   CellActions,
   CellName,
-}
+};

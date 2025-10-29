@@ -1,10 +1,14 @@
 type LinkSectionProps = {
-  title: string
-  description?: string
-  children: React.ReactNode
-}
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+};
 
-export function LinkSection({ title, description, children }: LinkSectionProps) {
+export function LinkSection({
+  title,
+  description,
+  children,
+}: LinkSectionProps) {
   return (
     <section className="p-6 max-w-5xl mx-auto bg-slate-100">
       <div className="mb-2">
@@ -16,5 +20,5 @@ export function LinkSection({ title, description, children }: LinkSectionProps) 
         <div className="border rounded-lg">{children}</div>
       </div>
     </section>
-  )
+  );
 }
