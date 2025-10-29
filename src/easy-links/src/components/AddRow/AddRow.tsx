@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { TableRow, TableCell } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 type AddRowProps = {
   onAdd: (row: {
@@ -40,37 +41,33 @@ export function AddRow({ onAdd }: AddRowProps) {
   return (
     <TableRow>
       <TableCell>
-        <input
+        <Input
           type="text"
           value={newRow.name}
           onChange={(e) => setNewRow({ ...newRow, name: e.target.value })}
-          className="border rounded px-2 py-1 text-sm w-full"
           placeholder="Nome"
         />
       </TableCell>
       <TableCell>
-        <input
+        <Input
           type="date"
           value={newRow.date}
           onChange={(e) => setNewRow({ ...newRow, date: e.target.value })}
-          className="border rounded px-2 py-1 text-sm w-full"
         />
       </TableCell>
       <TableCell>
-        <input
+        <Input
           type="text"
           value={newRow.link}
           onChange={(e) => setNewRow({ ...newRow, link: e.target.value })}
-          className="border rounded px-2 py-1 text-sm w-full"
           placeholder="https://..."
         />
       </TableCell>
       <TableCell>
-        <input
+        <Input
           type="text"
           value={newRow.tag}
           onChange={(e) => setNewRow({ ...newRow, tag: e.target.value })}
-          className="border rounded px-2 py-1 text-sm w-full"
           placeholder="Tag"
         />
       </TableCell>
