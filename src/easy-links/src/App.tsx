@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { LinkSection } from "@/components/Section/section";
 import {
   Table,
@@ -12,29 +12,44 @@ import {
   CellActions,
   CellName,
 } from "@/components/ui/table";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { AddRow } from "@/components/AddRow/AddRow";
 import { NewElement } from "@/components/AddRow/NewElementButton";
+import { localStorage } from "@/services/LocalStorageService";
+import type { LinkRow } from "@/services/LocalStorageService";
+import { CheckCircle2Icon } from "lucide-react";
 
 export default function App() {
-  type Row = {
-    name: string;
-    date: string;
-    link: string;
-    tag: string;
-  };
-
-  const [rows, setRows] = useState<Row[]>([]);
-
-  const handleDelete = (indexToRemove: number) => {
-    const updatedRows = rows.filter(
-      (_, currentIndex) => currentIndex !== indexToRemove
-    );
-    setRows(updatedRows);
-  };
-
+  const [rows, setRows] = useState<LinkRow[]>([]);
   const [isAdding, setIsAdding] = useState(false);
+  const [copiedLink, setCopiedLink] = useState<string | null>(null);
+  useEffect(() => {
+    setRows(localStorage.list());
+  }, []);
+
+  useEffect(() => {
+    if (!copiedLink) return;
+
+    const timer = setTimeout(() => {
+      setCopiedLink(null);
+    }, 2000);
+
+    return () => clearTimeout(timer); 
+  }, [copiedLink]);
 
   return (
+    <>
+    {copiedLink && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md">
+          <Alert className="flex items-center gap-2 bg-gray-800 text-white border-none shadow-md p-4 rounded-md">
+            <CheckCircle2Icon className="w-5 h-5 text-green-500" />
+            <div>
+              <AlertTitle className="text-white">Link copiado com sucesso!</AlertTitle>
+              <AlertDescription className="text-gray-300">{copiedLink}</AlertDescription>
+            </div>
+          </Alert>
+        </div>
+      )}
     <LinkSection
       title="Links Acadêmicos"
       description="Lista de recursos úteis para ambiente acadêmico"
@@ -56,25 +71,41 @@ export default function App() {
               <CellName
                 value={row.name}
                 onChange={(newValue) => {
-                  const updated = [...rows];
-                  updated[index].name = newValue;
-                  setRows(updated);
+                  localStorage.update(index, { name: newValue });
+                  setRows(localStorage.list());
                 }}
               />
 
-              <CellDatePicker value={row.date} />
+              <CellDatePicker
+              className="w-32"
+                value={row.date}
+                onChange={(newDate) => {
+                  localStorage.update(index, { date: newDate });
+                  setRows(localStorage.list());
+                }}
+              />
+
               <CellLink
                 href={row.link}
                 onChange={(newLink) => {
-                  const updated = [...rows];
-                  updated[index].link = newLink;
-                  setRows(updated);
+                  localStorage.update(index, { link: newLink });
+                  setRows(localStorage.list());
                 }}
               />
               <CellTag>{row.tag}</CellTag>
               <CellActions
-                onView={() => console.log("Visualizar", row)}
-                onDelete={() => handleDelete(index)}
+                onView={async () => {
+                  try {
+                    await navigator.clipboard.writeText(row.link);
+                    setCopiedLink(row.link); 
+                  } catch (err) {
+                    console.error("Falha ao copiar o link:", err);
+                  }
+                }}
+                onDelete={() => {
+                  localStorage.remove(index);
+                  setRows(localStorage.list());
+                }}
               />
             </TableRow>
           ))}
@@ -82,8 +113,9 @@ export default function App() {
           {isAdding ? (
             <AddRow
               onAdd={(row) => {
-                setRows([...rows, row]);
-                setIsAdding(false); // volta para NewElement após adicionar
+                localStorage.insert(row);
+                setRows(localStorage.list());
+                setIsAdding(false);
               }}
             />
           ) : (
@@ -92,5 +124,6 @@ export default function App() {
         </TableBody>
       </Table>
     </LinkSection>
+    </>
   );
 }

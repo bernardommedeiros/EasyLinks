@@ -1,7 +1,7 @@
 import * as React from "react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { Edit, Eye, Trash2 } from "lucide-react";
+import { Edit, Eye, Trash2, ClipboardCopy } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 function Table({ className, ...props }: React.ComponentProps<"table">) {
@@ -291,7 +291,7 @@ function CellActions({ onView, onDelete, className }: CellActionsProps) {
     >
       <div className="inline-flex items-center justify-center gap-3 text-gray-600">
         <button onClick={onView} title="Visualizar">
-          <Eye className="w-5 h-5 hover:text-blue-600 transition-colors" />
+          <ClipboardCopy className="w-5 h-5 hover:text-blue-600 transition-colors" />
         </button>
         <button onClick={onDelete} title="Excluir">
           <Trash2 className="w-5 h-5 text-red-500 hover:text-red-700 transition-colors cursor-pointer" />
