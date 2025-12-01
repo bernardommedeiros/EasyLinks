@@ -2,6 +2,7 @@ import * as React from "react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Edit, Eye, Trash2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
@@ -118,7 +119,7 @@ function CellName({ value, onChange }: CellNameProps) {
   return (
     <TableCell onDoubleClick={handleDoubleClick}>
       {isEditing ? (
-        <input
+        <Input
           type="text"
           value={tempValue}
           onChange={(e) => setTempValue(e.target.value)}
@@ -212,7 +213,7 @@ function CellLink({
       )}
     >
       {isEditing ? (
-        <input
+        <Input
           type="text"
           value={tempHref}
           onChange={(e) => setTempHref(e.target.value)}
@@ -263,7 +264,7 @@ function CellDatePicker({ value, onChange, className }: CellDatePickerProps) {
         className
       )}
     >
-      <input
+      <Input
         type="date"
         value={selectedDate}
         onChange={handleChange}
