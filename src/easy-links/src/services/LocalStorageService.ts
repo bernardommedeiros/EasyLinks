@@ -7,7 +7,7 @@ export type LinkRow = {
 
 export class LocalStorageService {
   private storageKey = "links-academicos";
-  private rows: LinkRow[] | null = null; // carregamento lazy
+  private rows: LinkRow[] | null = null; 
 
   // garante que os dados sejam carregados do browser
   private ensureLoaded() {
@@ -27,13 +27,11 @@ export class LocalStorageService {
     }
   }
 
-  // LISTAR
   list(): LinkRow[] {
     this.ensureLoaded();
     return [...(this.rows as LinkRow[])];
   }
 
-  // INSERIR
   insert(row: LinkRow): LinkRow {
     this.ensureLoaded();
     this.rows!.push(row);
@@ -41,13 +39,11 @@ export class LocalStorageService {
     return row;
   }
 
-  // DETALHAR
   detail(index: number): LinkRow | null {
     this.ensureLoaded();
     return this.rows![index] ?? null;
   }
 
-  // ATUALIZAR
   update(index: number, newData: Partial<LinkRow>): LinkRow | null {
     this.ensureLoaded();
     if (!this.rows![index]) return null;
@@ -57,7 +53,6 @@ export class LocalStorageService {
     return this.rows![index];
   }
 
-  // REMOVER
   remove(index: number): boolean {
     this.ensureLoaded();
     if (!this.rows![index]) return false;

@@ -18,6 +18,7 @@ import { NewElement } from "@/components/AddRow/NewElementButton";
 import { localStorage } from "@/services/LocalStorageService";
 import type { LinkRow } from "@/services/LocalStorageService";
 import { CheckCircle2Icon } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function App() {
   const [rows, setRows] = useState<LinkRow[]>([]);
