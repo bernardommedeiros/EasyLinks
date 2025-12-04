@@ -275,12 +275,12 @@ function CellDatePicker({ value, onChange, className }: CellDatePickerProps) {
 }
 
 type CellActionsProps = {
-  onView?: () => void;
+  onCopy?: () => void;
   onDelete?: () => void;
   className?: string;
 };
 
-function CellActions({ onView, onDelete, className }: CellActionsProps) {
+function CellActions({ onCopy, onDelete, className }: CellActionsProps) {
   return (
     <td
       data-slot="table-cell"
@@ -290,7 +290,7 @@ function CellActions({ onView, onDelete, className }: CellActionsProps) {
       )}
     >
       <div className="inline-flex items-center justify-center gap-3 text-gray-600">
-        <button onClick={onView} title="Visualizar">
+        <button onClick={onCopy} title="Copiar">
           <ClipboardCopy className="w-5 h-5 hover:text-blue-600 transition-colors" />
         </button>
         <button onClick={onDelete} title="Excluir">
