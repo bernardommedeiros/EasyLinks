@@ -6,13 +6,17 @@ import {
   CellTag, CellLink, CellDatePicker, CellActions, CellName
 } from "@/components/ui/table";
 import { AddRow } from "@/components/AddRow/AddRow";
-import { NewElement } from "@/components/AddRow/NewElementButton"; 
+import { NewElement } from "@/components/AddRow/NewElementButton";
 
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle2Icon } from "lucide-react";
 
 import { getSection } from "@/services/sectionService";
 import * as tableService from "@/services/tableService";
+
+import type { NotificationMessage } from "@/services/useNotifications";
+import { useNotifications } from "@/services/useNotifications";
+import { NotificationsBell } from "@/components/notificationsBell";
 
 export type LinkRow = {
   name: string;
@@ -28,6 +32,9 @@ export default function SectionPage() {
   const [sectionInfo, setSectionInfo] = useState<{ title: string; description?: string } | null>(null);
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Notificações
+  const { notifications, alert } = useNotifications();
 
   useEffect(() => {
     if (!id) return;
@@ -68,6 +75,7 @@ export default function SectionPage() {
 
   return (
     <>
+      {/* Alert temporário */}
       {copiedLink && (
         <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md">
           <Alert className="flex items-center gap-2 bg-gray-800 text-white border-none shadow-md p-4 rounded-md">
@@ -80,6 +88,28 @@ export default function SectionPage() {
         </div>
       )}
 
+      {/* Alert de notificação de tabela */}
+      {alert && (
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md">
+          <Alert className="flex items-center gap-2 bg-blue-800 text-white border-none shadow-md p-4 rounded-md">
+            <CheckCircle2Icon className="w-5 h-5 text-white" />
+            <div>
+              <AlertTitle>Atualização na tabela!</AlertTitle>
+              <AlertDescription>
+                {alert.type.toUpperCase()} - linha {alert.rowIndex ?? "-"} da seção {alert.sectionId}
+              </AlertDescription>
+            </div>
+          </Alert>
+        </div>
+      )}
+
+      {/* Cabeçalho com Bell */}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Minhas Seções</h1>
+        <NotificationsBell notifications={notifications} />
+      </div>
+
+      {/* Tabela de dados */}
       <LinkSection title={sectionInfo.title} description={sectionInfo.description}>
         <Table>
           <TableHeader>

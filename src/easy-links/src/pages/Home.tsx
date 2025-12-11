@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Bell } from "lucide-react";
 import { listSections, removeSection } from "@/services/sectionService";
 
 type SectionInfo = {
@@ -17,7 +17,7 @@ export default function Home() {
 
   useEffect(() => {
     async function load() {
-      const data = await listSections();
+      const data = await listSections();''
       setSections(data as SectionInfo[]);
       setLoading(false);
     }
@@ -36,6 +36,7 @@ export default function Home() {
     <div className="p-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Minhas Seções</h1>
+        <Bell />
       </div>
 
       {sections.length === 0 ? (
