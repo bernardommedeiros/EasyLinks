@@ -1,4 +1,3 @@
-// components/NotificationsBell.tsx
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -20,15 +19,41 @@ export function NotificationsBell({ notifications }: Props) {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80">
-        <h4 className="font-bold mb-2">Notificações</h4>
-        {notifications.length === 0 && <p className="text-gray-500">Sem notificações</p>}
+
+      <PopoverContent className="w-96 p-3 mr-6 bg-gray-900">
+        <h4 className="font-bold mb-2 text-white">Notificações</h4>
+
+        {notifications.length === 0 && (
+          <p className="text-white">Sem notificações</p>
+        )}
+
         {notifications.map((n, idx) => (
-          <div key={idx} className="p-2 border-b last:border-b-0">
-            <p className="text-sm">
-              {n.type.toUpperCase()} - Linha {n.rowIndex ?? "-"} da seção {n.sectionId}
+          <div key={idx} className="p-3 border-b last:border-b-0 text-sm bg-gray-900 text-white rounded-md">
+            <p className="font-semibold">
+              {n.type.toUpperCase()} — Linha {n.rowIndex ?? "-"} da seção {n.sectionId}
             </p>
-            <p className="text-xs text-gray-500">{new Date(n.timestamp).toLocaleTimeString()}</p>
+
+            {n.type !== "create" && n.oldRowData && n.newRowData && (
+              <div className="mt-1 text-xs">
+                <p className="font-medium">Campo alterado: {n.changedField}</p>
+
+                <div className="mt-1">
+                  <p className="text-red-600">
+                    <span className="font-semibold">Antigo:</span>{" "}
+                    {String(n.oldRowData[n.changedField])}
+                  </p>
+
+                  <p className="text-green-600">
+                    <span className="font-semibold">Novo:</span>{" "}
+                    {String(n.newRowData[n.changedField])}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <p className="text-[10px] text-gray-500 mt-2">
+              {new Date(n.timestamp).toLocaleTimeString()}
+            </p>
           </div>
         ))}
       </PopoverContent>

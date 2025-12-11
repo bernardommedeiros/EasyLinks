@@ -1,10 +1,12 @@
 import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { LinkSection } from "@/components/Section/section";
+
 import {
   Table, TableHeader, TableRow, TableHead, TableBody,
   CellTag, CellLink, CellDatePicker, CellActions, CellName
 } from "@/components/ui/table";
+
 import { AddRow } from "@/components/AddRow/AddRow";
 import { NewElement } from "@/components/AddRow/NewElementButton";
 
@@ -14,7 +16,6 @@ import { CheckCircle2Icon } from "lucide-react";
 import { getSection } from "@/services/sectionService";
 import * as tableService from "@/services/tableService";
 
-import type { NotificationMessage } from "@/services/useNotifications";
 import { useNotifications } from "@/services/useNotifications";
 import { NotificationsBell } from "@/components/notificationsBell";
 
@@ -33,7 +34,6 @@ export default function SectionPage() {
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Notificações
   const { notifications, alert } = useNotifications();
 
   useEffect(() => {
@@ -68,27 +68,58 @@ export default function SectionPage() {
   if (loading) return <p className="text-center mt-8">Carregando...</p>;
   if (!sectionInfo) return <p>Seção não encontrada</p>;
 
-  const updateRows = async (newRows: LinkRow[]) => {
+  const sendUpdate = async (rowIndex: number, newRow: LinkRow, type = "edit") => {
+    if (!id) return;
+
+    const local = [...rows];
+    local[rowIndex] = newRow;
+    setRows(local);
+
+    await fetch("http://localhost:3001/update-row", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sectionId: id,
+        rowIndex,
+        type,
+        rowData: newRow,
+      }),
+    });
+  };
+
+  const deleteRow = async (rowIndex: number) => {
+    if (!id) return;
+
+    const newRows = rows.filter((_, idx) => idx !== rowIndex);
+
     setRows(newRows);
-    if (id) await tableService.setTableRows(id, newRows);
+
+    await fetch("http://localhost:3001/update-row", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sectionId: id,
+        rowIndex,
+        type: "delete",
+        rowData: null,
+      }),
+    });
   };
 
   return (
     <>
-      {/* Alert temporário */}
       {copiedLink && (
         <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md">
           <Alert className="flex items-center gap-2 bg-gray-800 text-white border-none shadow-md p-4 rounded-md">
             <CheckCircle2Icon className="w-5 h-5 text-green-500" />
             <div>
-              <AlertTitle className="text-white">Link copiado com sucesso!</AlertTitle>
+              <AlertTitle className="text-white">Link copiado!</AlertTitle>
               <AlertDescription className="text-gray-300">{copiedLink}</AlertDescription>
             </div>
           </Alert>
         </div>
       )}
 
-      {/* Alert de notificação de tabela */}
       {alert && (
         <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md">
           <Alert className="flex items-center gap-2 bg-blue-800 text-white border-none shadow-md p-4 rounded-md">
@@ -96,20 +127,18 @@ export default function SectionPage() {
             <div>
               <AlertTitle>Atualização na tabela!</AlertTitle>
               <AlertDescription>
-                {alert.type.toUpperCase()} - linha {alert.rowIndex ?? "-"} da seção {alert.sectionId}
+                {alert.type.toUpperCase()} — linha {alert.rowIndex ?? "-"} da seção {alert.sectionId}
               </AlertDescription>
             </div>
           </Alert>
         </div>
       )}
 
-      {/* Cabeçalho com Bell */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Minhas Seções</h1>
         <NotificationsBell notifications={notifications} />
       </div>
 
-      {/* Tabela de dados */}
       <LinkSection title={sectionInfo.title} description={sectionInfo.description}>
         <Table>
           <TableHeader>
@@ -126,52 +155,36 @@ export default function SectionPage() {
               <TableRow key={index}>
                 <CellName
                   value={row.name}
-                  onChange={async (newValue) => {
-                    const updatedRows = [...rows];
-                    updatedRows[index].name = newValue;
-                    await updateRows(updatedRows);
-                  }}
+                  onChange={(newValue) => sendUpdate(index, { ...row, name: newValue })}
                 />
                 <CellDatePicker
                   value={row.date}
-                  onChange={async (newDate) => {
-                    const updatedRows = [...rows];
-                    updatedRows[index].date = newDate;
-                    await updateRows(updatedRows);
-                  }}
+                  onChange={(newValue) => sendUpdate(index, { ...row, date: newValue })}
                 />
                 <CellLink
                   href={row.link}
-                  onChange={async (newLink) => {
-                    const updatedRows = [...rows];
-                    updatedRows[index].link = newLink;
-                    await updateRows(updatedRows);
-                  }}
+                  onChange={(newValue) => sendUpdate(index, { ...row, link: newValue })}
                 />
                 <CellTag>{row.tag}</CellTag>
+
                 <CellActions
-                  onDelete={async () => {
-                    const updatedRows = [...rows];
-                    updatedRows.splice(index, 1);
-                    await updateRows(updatedRows);
-                  }}
+                  onDelete={() => deleteRow(index)}
                   onCopy={async () => {
-                    try {
-                      await navigator.clipboard.writeText(row.link);
-                      setCopiedLink(row.link);
-                    } catch (err) {
-                      console.error("Falha ao copiar o link:", err);
-                    }
+                    await navigator.clipboard.writeText(row.link);
+                    setCopiedLink(row.link);
                   }}
                 />
               </TableRow>
             ))}
+
             {isAdding ? (
               <AddRow
                 onAdd={async (row) => {
-                  const updatedRows = [...rows, row];
-                  await updateRows(updatedRows);
+                  const idx = rows.length;
+                  setRows([...rows, row]);
                   setIsAdding(false);
+
+                  await sendUpdate(idx, row, "add");
                 }}
               />
             ) : (
