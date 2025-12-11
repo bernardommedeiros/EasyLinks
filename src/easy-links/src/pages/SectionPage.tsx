@@ -7,23 +7,56 @@ import {
 } from "@/components/ui/table";
 import { AddRow } from "@/components/AddRow/AddRow";
 import { NewElement } from "@/components/AddRow/NewElementButton";
-import { localStorage as storage } from "@/services/LocalStorageService";
-import type { LinkRow } from "@/services/LocalStorageService";
 
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle2Icon } from "lucide-react";
 
+import { getSection } from "@/services/sectionService";
+import * as tableService from "@/services/tableService";
+
+import type { NotificationMessage } from "@/services/useNotifications";
+import { useNotifications } from "@/services/useNotifications";
+import { NotificationsBell } from "@/components/notificationsBell";
+
+export type LinkRow = {
+  name: string;
+  date: string;
+  link: string;
+  tag: string;
+};
+
 export default function SectionPage() {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const [rows, setRows] = useState<LinkRow[]>([]);
   const [isAdding, setIsAdding] = useState(false);
-  const [sectionInfo, setSectionInfo] = useState<{title:string, description:string}|null>(null);
+  const [sectionInfo, setSectionInfo] = useState<{ title: string; description?: string } | null>(null);
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Notificações
+  const { notifications, alert } = useNotifications();
 
   useEffect(() => {
-    setRows(storage.list());
-    const data = localStorage.getItem(`section-${id}`);
-    if (data) setSectionInfo(JSON.parse(data));
+    if (!id) return;
+
+    const loadSection = async () => {
+      setLoading(true);
+
+      const section = await getSection(id);
+      if (!section) {
+        setSectionInfo(null);
+        setLoading(false);
+        return;
+      }
+      setSectionInfo(section);
+
+      const firestoreRows = await tableService.getTableRows(id);
+      setRows(firestoreRows);
+
+      setLoading(false);
+    };
+
+    loadSection();
   }, [id]);
 
   useEffect(() => {
@@ -32,10 +65,17 @@ export default function SectionPage() {
     return () => clearTimeout(timer);
   }, [copiedLink]);
 
+  if (loading) return <p className="text-center mt-8">Carregando...</p>;
   if (!sectionInfo) return <p>Seção não encontrada</p>;
+
+  const updateRows = async (newRows: LinkRow[]) => {
+    setRows(newRows);
+    if (id) await tableService.setTableRows(id, newRows);
+  };
 
   return (
     <>
+      {/* Alert temporário */}
       {copiedLink && (
         <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md">
           <Alert className="flex items-center gap-2 bg-gray-800 text-white border-none shadow-md p-4 rounded-md">
@@ -48,6 +88,28 @@ export default function SectionPage() {
         </div>
       )}
 
+      {/* Alert de notificação de tabela */}
+      {alert && (
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md">
+          <Alert className="flex items-center gap-2 bg-blue-800 text-white border-none shadow-md p-4 rounded-md">
+            <CheckCircle2Icon className="w-5 h-5 text-white" />
+            <div>
+              <AlertTitle>Atualização na tabela!</AlertTitle>
+              <AlertDescription>
+                {alert.type.toUpperCase()} - linha {alert.rowIndex ?? "-"} da seção {alert.sectionId}
+              </AlertDescription>
+            </div>
+          </Alert>
+        </div>
+      )}
+
+      {/* Cabeçalho com Bell */}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Minhas Seções</h1>
+        <NotificationsBell notifications={notifications} />
+      </div>
+
+      {/* Tabela de dados */}
       <LinkSection title={sectionInfo.title} description={sectionInfo.description}>
         <Table>
           <TableHeader>
@@ -64,30 +126,34 @@ export default function SectionPage() {
               <TableRow key={index}>
                 <CellName
                   value={row.name}
-                  onChange={(newValue) => {
-                    storage.update(index, { name: newValue });
-                    setRows(storage.list());
+                  onChange={async (newValue) => {
+                    const updatedRows = [...rows];
+                    updatedRows[index].name = newValue;
+                    await updateRows(updatedRows);
                   }}
                 />
                 <CellDatePicker
                   value={row.date}
-                  onChange={(newDate) => {
-                    storage.update(index, { date: newDate });
-                    setRows(storage.list());
+                  onChange={async (newDate) => {
+                    const updatedRows = [...rows];
+                    updatedRows[index].date = newDate;
+                    await updateRows(updatedRows);
                   }}
                 />
                 <CellLink
                   href={row.link}
-                  onChange={(newLink) => {
-                    storage.update(index, { link: newLink });
-                    setRows(storage.list());
+                  onChange={async (newLink) => {
+                    const updatedRows = [...rows];
+                    updatedRows[index].link = newLink;
+                    await updateRows(updatedRows);
                   }}
                 />
                 <CellTag>{row.tag}</CellTag>
                 <CellActions
-                  onDelete={() => {
-                    storage.remove(index);
-                    setRows(storage.list());
+                  onDelete={async () => {
+                    const updatedRows = [...rows];
+                    updatedRows.splice(index, 1);
+                    await updateRows(updatedRows);
                   }}
                   onCopy={async () => {
                     try {
@@ -102,9 +168,9 @@ export default function SectionPage() {
             ))}
             {isAdding ? (
               <AddRow
-                onAdd={(row) => {
-                  storage.insert(row);
-                  setRows(storage.list());
+                onAdd={async (row) => {
+                  const updatedRows = [...rows, row];
+                  await updateRows(updatedRows);
                   setIsAdding(false);
                 }}
               />

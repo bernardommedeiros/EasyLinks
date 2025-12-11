@@ -6,34 +6,53 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 
-export default function EditSectionPage() {
-  const { id } = useParams(); // pega o id da seção da URL
+import { getSection, updateSection } from "@/services/sectionService";
+
+export default function UpdateSectionPage() {
+  const { id } = useParams(); 
   const navigate = useNavigate();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Carrega dados da seção existente
   useEffect(() => {
     if (!id) return;
-    const raw = localStorage.getItem(`section-${id}`);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      setTitle(parsed.title || "");
-      setDescription(parsed.description || "");
-    }
+
+    const load = async () => {
+      const data = await getSection(id);
+      if (!data) {
+        setError("Seção não encontrada.");
+        setLoading(false);
+        return;
+      }
+
+      setTitle(data.title || "");
+      setDescription(data.description || "");
+      setLoading(false);
+    };
+
+    load();
   }, [id]);
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     if (!title.trim() || !description.trim()) {
       setError("Preencha título e descrição antes de confirmar.");
       return;
     }
 
-    localStorage.setItem(`section-${id}`, JSON.stringify({ title, description }));
-    navigate(`/section/${id}`); // volta para a página da seção
+    await updateSection(id!, { title, description });
+    navigate(`/section/${id}`);
   };
+
+  if (loading) {
+    return (
+      <div className="w-full h-screen flex items-center justify-center">
+        <p>Carregando...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full h-screen flex flex-col items-center justify-center bg-slate-50 px-4">
