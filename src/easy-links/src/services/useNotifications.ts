@@ -4,8 +4,9 @@ import { db } from "@/firebase";
 
 export type NotificationMessage = {
   sectionId: string;
+  sectionName: string;
   rowIndex: number | null;
-  type: "update" | "delete" | "create";
+  type: "update" | "delete" | "add";
   timestamp: number;
 
   oldRowData?: Record<string, any> | null;

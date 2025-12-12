@@ -1,15 +1,12 @@
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { LinkSection } from "@/components/Section/section";
-
 import {
   Table, TableHeader, TableRow, TableHead, TableBody,
   CellTag, CellLink, CellDatePicker, CellActions, CellName
 } from "@/components/ui/table";
-
 import { AddRow } from "@/components/AddRow/AddRow";
 import { NewElement } from "@/components/AddRow/NewElementButton";
-
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle2Icon } from "lucide-react";
 
@@ -17,7 +14,7 @@ import { getSection } from "@/services/sectionService";
 import * as tableService from "@/services/tableService";
 
 import { useNotifications } from "@/services/useNotifications";
-import { NotificationsBell } from "@/components/notificationsBell";
+import { NotificationsBell } from "@/components/NotificationsBell";
 
 export type LinkRow = {
   name: string;
@@ -43,11 +40,6 @@ export default function SectionPage() {
       setLoading(true);
 
       const section = await getSection(id);
-      if (!section) {
-        setSectionInfo(null);
-        setLoading(false);
-        return;
-      }
       setSectionInfo(section);
 
       const firestoreRows = await tableService.getTableRows(id);
@@ -66,14 +58,9 @@ export default function SectionPage() {
   }, [copiedLink]);
 
   if (loading) return <p className="text-center mt-8">Carregando...</p>;
-  if (!sectionInfo) return <p>Seção não encontrada</p>;
 
-  const sendUpdate = async (rowIndex: number, newRow: LinkRow, type = "edit") => {
+  const notifyBackend = async (type: string, rowIndex: number, rowData: any) => {
     if (!id) return;
-
-    const local = [...rows];
-    local[rowIndex] = newRow;
-    setRows(local);
 
     await fetch("http://localhost:3001/update-row", {
       method: "POST",
@@ -82,64 +69,75 @@ export default function SectionPage() {
         sectionId: id,
         rowIndex,
         type,
-        rowData: newRow,
+        rowData,
       }),
     });
   };
 
-  const deleteRow = async (rowIndex: number) => {
+  const sendUpdate = async (rowIndex: number, newRow: LinkRow, type = "update") => {
     if (!id) return;
 
-    const newRows = rows.filter((_, idx) => idx !== rowIndex);
+    const local = [...rows];
 
-    setRows(newRows);
+    if (type === "add") {
+      local.push(newRow);
+    } else if (type === "delete") {
+      local.splice(rowIndex, 1);
+    } else {
+      local[rowIndex] = newRow;
+    }
 
-    await fetch("http://localhost:3001/update-row", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        sectionId: id,
-        rowIndex,
-        type: "delete",
-        rowData: null,
-      }),
-    });
+    setRows(local);
+
+    if (type === "add") {
+      await tableService.insertTableRow(id, newRow);
+    } else if (type === "update") {
+      await tableService.updateTableRow(id, rowIndex, newRow);
+    } else if (type === "delete") {
+      await tableService.removeTableRow(id, rowIndex);
+    }
+
+    notifyBackend(type, rowIndex, newRow);
   };
 
   return (
-    <>
+    <div className="p-8">
+
       {copiedLink && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md">
-          <Alert className="flex items-center gap-2 bg-gray-800 text-white border-none shadow-md p-4 rounded-md">
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 max-w-md w-full">
+          <Alert className="flex items-center gap-2 bg-gray-800 text-white p-4 rounded-md">
             <CheckCircle2Icon className="w-5 h-5 text-green-500" />
             <div>
-              <AlertTitle className="text-white">Link copiado!</AlertTitle>
-              <AlertDescription className="text-gray-300">{copiedLink}</AlertDescription>
+              <AlertTitle>Link copiado!</AlertTitle>
+              <AlertDescription>{copiedLink}</AlertDescription>
             </div>
           </Alert>
         </div>
       )}
 
       {alert && (
-        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md">
-          <Alert className="flex items-center gap-2 bg-blue-800 text-white border-none shadow-md p-4 rounded-md">
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 max-w-md w-full">
+          <Alert className="flex items-center gap-2 bg-gray-800 text-white p-4 rounded-md">
             <CheckCircle2Icon className="w-5 h-5 text-white" />
             <div>
               <AlertTitle>Atualização na tabela!</AlertTitle>
               <AlertDescription>
-                {alert.type.toUpperCase()} — linha {alert.rowIndex ?? "-"} da seção {alert.sectionId}
+                {alert.type.toUpperCase()} — Na linha {alert.newRowData?.name ?? "-"}
               </AlertDescription>
             </div>
           </Alert>
         </div>
       )}
 
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Minhas Seções</h1>
-        <NotificationsBell notifications={notifications} />
-      </div>
-
-      <LinkSection title={sectionInfo.title} description={sectionInfo.description}>
+      <LinkSection
+        title={
+          <div className="flex items-center justify-between">
+            <span>{sectionInfo?.title}</span>
+            <NotificationsBell notifications={notifications.filter(n => n.sectionId === id)} />
+          </div>
+        }
+        description={sectionInfo?.description}
+      >
         <Table>
           <TableHeader>
             <TableRow>
@@ -150,25 +148,29 @@ export default function SectionPage() {
               <TableHead>Ações</TableHead>
             </TableRow>
           </TableHeader>
+
           <TableBody>
             {rows.map((row, index) => (
               <TableRow key={index}>
                 <CellName
                   value={row.name}
-                  onChange={(newValue) => sendUpdate(index, { ...row, name: newValue })}
+                  onChange={(v) => sendUpdate(index, { ...row, name: v }, "update")}
                 />
+
                 <CellDatePicker
                   value={row.date}
-                  onChange={(newValue) => sendUpdate(index, { ...row, date: newValue })}
+                  onChange={(v) => sendUpdate(index, { ...row, date: v }, "update")}
                 />
+
                 <CellLink
                   href={row.link}
-                  onChange={(newValue) => sendUpdate(index, { ...row, link: newValue })}
+                  onChange={(v) => sendUpdate(index, { ...row, link: v }, "update")}
                 />
+
                 <CellTag>{row.tag}</CellTag>
 
                 <CellActions
-                  onDelete={() => deleteRow(index)}
+                  onDelete={() => sendUpdate(index, row, "delete")}
                   onCopy={async () => {
                     await navigator.clipboard.writeText(row.link);
                     setCopiedLink(row.link);
@@ -179,20 +181,26 @@ export default function SectionPage() {
 
             {isAdding ? (
               <AddRow
-                onAdd={async (row) => {
-                  const idx = rows.length;
-                  setRows([...rows, row]);
+                onAdd={(r) => {
+                  sendUpdate(rows.length, r, "add");
                   setIsAdding(false);
-
-                  await sendUpdate(idx, row, "add");
                 }}
               />
             ) : (
               <NewElement onClick={() => setIsAdding(true)} />
             )}
           </TableBody>
+
         </Table>
       </LinkSection>
-    </>
+      <div className="mt-8 max-w-5xl mx-auto">
+      <Link
+        to="/"
+        className="px-4 py-2 bg-gray-700 text-white rounded-md shadow hover:bg-gray-900 transition"
+      >
+        Voltar
+      </Link>
+    </div>
+    </div>
   );
 }

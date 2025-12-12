@@ -1,8 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Plus, Pencil, Trash2, Bell } from "lucide-react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 import { listSections, removeSection } from "@/services/sectionService";
+import { NotificationsBell } from "@/components/NotificationsBell";
+import { useNotifications } from "@/services/useNotifications";
 
 type SectionInfo = {
   id: string;
@@ -14,6 +16,7 @@ export default function Home() {
   const navigate = useNavigate();
   const [sections, setSections] = useState<SectionInfo[]>([]);
   const [loading, setLoading] = useState(true);
+  const { notifications, alert } = useNotifications();
 
   useEffect(() => {
     async function load() {
@@ -36,7 +39,7 @@ export default function Home() {
     <div className="p-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Minhas Seções</h1>
-        <Bell />
+        <NotificationsBell notifications={notifications} />
       </div>
 
       {sections.length === 0 ? (
@@ -46,7 +49,8 @@ export default function Home() {
           {sections.map((s) => (
             <li
               key={s.id}
-              className="flex items-center justify-between p-4 border rounded-md hover:bg-gray-50"
+              onClick={() => navigate(`/section/${s.id}`)}
+              className="flex items-center justify-between p-4 border rounded-md hover:bg-gray-10"
             >
               <div
                 className="cursor-pointer"
