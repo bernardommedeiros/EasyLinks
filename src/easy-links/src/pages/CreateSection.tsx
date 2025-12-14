@@ -6,21 +6,27 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 
+import { createSection } from "@/services/sectionService";
+
 export default function CreateSectionCard() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!title.trim() || !description.trim()) {
       setError("Preencha título e descrição antes de confirmar.");
       return;
     }
 
-    const id = Date.now().toString();
-    localStorage.setItem(`section-${id}`, JSON.stringify({ title, description }));
-    navigate(`/section/${id}`);
+    try {
+      const newDocRef = await createSection({ title, description });
+      navigate(`/section/${newDocRef.id}`);
+    } catch (err) {
+      console.error(err);
+      setError("Erro ao criar a seção. Tente novamente.");
+    }
   };
 
   return (
@@ -62,7 +68,7 @@ export default function CreateSectionCard() {
                 onClick={handleCreate}
                 variant="default"
                 size="lg"
-                className=" cursor-pointer bg-black text-white font-semibold px-8 py-4 rounded-lg"
+                className="cursor-pointer bg-black text-white font-semibold px-8 py-4 rounded-lg"
               >
                 Confirmar
               </Button>
