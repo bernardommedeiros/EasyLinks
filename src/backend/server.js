@@ -7,7 +7,7 @@ const cors = require("cors");
 const app = express();
 
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: "*",
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type"],
 }));
@@ -28,7 +28,7 @@ try {
 
 const db = admin.firestore();
 
-const RABBIT_URL = "amqp://guest:guest@localhost:5672";
+const RABBIT_URL = "amqp://guest:guest@10.24.12.252:5672";
 const EXCHANGE = "table_updates";
 
 let rabbitConnection = null;
@@ -36,10 +36,10 @@ let rabbitChannel = null;
 
 console.log("Iniciando WebSocket na porta 8080…");
 
-const wss = new WebSocketServer({ port: 8080 });
+const wss = new WebSocketServer({ port: 8080, host: "0.0.0.0", });
 
 wss.on("listening", () => {
-  console.log("WebSocket rodando em ws://localhost:8080");
+  console.log("WebSocket rodando na 8080");
 });
 
 function broadcast(msg) {
@@ -184,7 +184,7 @@ app.post("/update-row", async (req, res) => {
   }
 });
 
-app.listen(3001, () => {
+app.listen(3001, "0.0.0.0", () => {
   console.log("REST na porta 3001");
 });
 

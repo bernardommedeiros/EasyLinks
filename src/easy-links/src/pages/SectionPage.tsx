@@ -62,7 +62,7 @@ export default function SectionPage() {
   const notifyBackend = async (type: string, rowIndex: number, rowData: any) => {
     if (!id) return;
 
-    await fetch("http://localhost:3001/update-row", {
+    await fetch("http://10.24.12.252:3001/update-row", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -92,6 +92,8 @@ export default function SectionPage() {
     if (type === "add") {
       await tableService.insertTableRow(id, newRow);
     } else if (type === "update") {
+      const before = rows[rowIndex];
+      if (JSON.stringify(before) === JSON.stringify(newRow)) { return }
       await tableService.updateTableRow(id, rowIndex, newRow);
     } else if (type === "delete") {
       await tableService.removeTableRow(id, rowIndex);
