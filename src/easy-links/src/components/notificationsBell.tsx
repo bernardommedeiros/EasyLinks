@@ -9,7 +9,7 @@ type Props = { notifications: NotificationMessage[] };
 export function NotificationsBell({ notifications }: Props) {
   const [open, setOpen] = useState(false);
   const [page, setPage] = useState(0);
-  const pageSize = 4;
+  const pageSize = 3;
 
   const totalPages = Math.ceil(notifications.length / pageSize);
   const currentNotifications = notifications.slice(page * pageSize, (page + 1) * pageSize);

@@ -1,6 +1,6 @@
 import { db } from "@/firebase";
 import {
-  collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc,
+  collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, query, where
 } from "firebase/firestore";
 
 const COLLECTION = "sections";
@@ -33,5 +33,28 @@ export async function updateSection(id: string, data: any) {
 }
 
 export async function removeSection(id: string) {
-  return deleteDoc(doc(db, COLLECTION, id));
+  const notifQuery = query(
+    collection(db, "notifications"),
+    where("sectionId", "==", id)
+  );
+
+  const notifSnap = await getDocs(notifQuery);
+
+  const notifDeletes = notifSnap.docs.map((d) => deleteDoc(d.ref));
+
+  const rowsCollection = collection(db, `sectionRows/${id}/rows`);
+  const rowsSnap = await getDocs(rowsCollection);
+
+  const rowDeletes = rowsSnap.docs.map((d) => deleteDoc(d.ref));
+
+  const deleteSectionRowsDoc = deleteDoc(doc(db, "sectionRows", id));
+
+  const deleteSectionDoc = deleteDoc(doc(db, COLLECTION, id));
+
+  await Promise.all([
+    ...notifDeletes,
+    ...rowDeletes,
+    deleteSectionRowsDoc,
+    deleteSectionDoc,
+  ]);
 }

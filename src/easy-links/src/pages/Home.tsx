@@ -30,6 +30,7 @@ export default function Home() {
   async function handleDelete(id: string) {
     await removeSection(id);
     setSections((prev) => prev.filter((s) => s.id !== id));
+    navigate("/");
   }
 
   if (loading)
