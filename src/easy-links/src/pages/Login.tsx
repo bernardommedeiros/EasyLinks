@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import axios from "axios";
 
-const apiUrl = import.meta.env.VITE_API_URL;
+const apiUrl = 'http://localhost:3000';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -19,26 +19,34 @@ export default function Login() {
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setBackendError(null);
-    console.log("API URL:", apiUrl);
+
     try {
-      console.log("API URL:", apiUrl);
-      const res = await axios.post(`${apiUrl}/auth/login`, {
-        username,
+      const res = await axios.post(`${apiUrl}/login`, {
+        email: username,      // mapeia pro backend
         password,
       });
 
-      if (res.status !== 200) {
+      if (!res.data.success) {
         setBackendError("Credenciais inválidas");
         return;
       }
 
+      // salva JWT no contexto
       login(res.data.token, username);
+
       navigate("/enquetes");
-    } catch (err) {
-      setBackendError("Credenciais inválidas");
+    } catch (err: any) {
+      console.error("LOGIN ERROR ", err);
+
+      if (axios.isAxiosError(err)) {
+        console.log("STATUS:", err.response?.status);
+        console.log("DATA:", err.response?.data);
+      }
+
+      setBackendError("Erro ao conectar com o servidor");
     }
-    console.log("API URL:", apiUrl);
   }
+
 
   return (
     <div className="w-full h-screen flex flex-col items-center justify-center bg-slate-50 px-4">
