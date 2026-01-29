@@ -1,5 +1,7 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { signal } from "@preact/signals-react";
+import { useSignals } from "@preact/signals-react/runtime";
+import { useNavigate } from "react-router";
+import { useRef } from "react";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -9,23 +11,35 @@ import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { createSection } from "@/services/sectionService";
 
 export default function CreateSectionCard() {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  useSignals();
   const navigate = useNavigate();
 
+  const title = useRef(signal("")).current;
+  const description = useRef(signal("")).current;
+  const error = useRef(signal<string | null>(null)).current;
+  const loading = useRef(signal(false)).current;
+
   const handleCreate = async () => {
-    if (!title.trim() || !description.trim()) {
-      setError("Preencha título e descrição antes de confirmar.");
+    if (!title.value.trim() || !description.value.trim()) {
+      error.value = "Preencha título e descrição antes de confirmar.";
       return;
     }
 
     try {
-      const newDocRef = await createSection({ title, description });
+      loading.value = true;
+      error.value = null;
+
+      const newDocRef = await createSection({
+        title: title.value,
+        description: description.value,
+      });
+
       navigate(`/section/${newDocRef.id}`);
     } catch (err) {
       console.error(err);
-      setError("Erro ao criar a seção. Tente novamente.");
+      error.value = "Erro ao criar a seção. Tente novamente.";
+    } finally {
+      loading.value = false;
     }
   };
 
@@ -35,17 +49,15 @@ export default function CreateSectionCard() {
         <CardHeader>
           <CardTitle className="text-xl">Criar nova seção</CardTitle>
         </CardHeader>
+
         <CardContent>
           <div className="space-y-4">
             <div>
               <Label htmlFor="title">Título</Label>
               <Input
                 id="title"
-                placeholder="Título da seção"
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="mt-2"
+                value={title.value}
+                onChange={(e) => (title.value = e.target.value)}
               />
             </div>
 
@@ -53,25 +65,28 @@ export default function CreateSectionCard() {
               <Label htmlFor="description">Descrição</Label>
               <Input
                 id="description"
-                placeholder="Descrição"
-                type="text"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="mt-2"
+                value={description.value}
+                onChange={(e) => (description.value = e.target.value)}
               />
             </div>
 
-            {error && <p className="text-red-600 text-sm">{error}</p>}
+            {error.value && (
+              <p className="text-red-600 text-sm">{error.value}</p>
+            )}
 
-            <div className="flex justify-end mt-2">
-              <Button
-                onClick={handleCreate}
-                variant="default"
-                size="lg"
-                className="cursor-pointer bg-black text-white font-semibold px-8 py-4 rounded-lg"
-              >
-                Confirmar
-              </Button>
+            <Button
+              onClick={handleCreate}
+              disabled={loading.value}
+              className="w-full bg-black text-white disabled:opacity-60"
+            >
+              {loading.value ? "Criando..." : "Confirmar"}
+            </Button>
+
+            <div className="mt-4 p-3 text-xs bg-slate-100 rounded">
+              <p className="font-bold">Signals ao vivo</p>
+              <p>title → {title.value}</p>
+              <p>description → {description.value}</p>
+              <p>loading → {String(loading.value)}</p>
             </div>
           </div>
         </CardContent>
