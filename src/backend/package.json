@@ -5,11 +5,14 @@
     "start-backend": "node src/backend/server.js"
   },
   "dependencies": {
+    "@grpc/grpc-js": "^1.14.3",
+    "@grpc/proto-loader": "^0.8.0",
     "amqplib": "^0.10.9",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^4.22.1",
     "firebase-admin": "^13.6.0",
+    "jsonwebtoken": "^9.0.3",
     "ws": "^8.18.3"
   }
 }

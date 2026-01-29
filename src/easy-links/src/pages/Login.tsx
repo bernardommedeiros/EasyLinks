@@ -22,7 +22,7 @@ export default function Login() {
 
     try {
       const res = await axios.post(`${apiUrl}/login`, {
-        email: username,      // mapeia pro backend
+        email: username,      
         password,
       });
 
@@ -65,7 +65,7 @@ export default function Login() {
         <CardContent>
           <form className="space-y-3" onSubmit={handleLogin}>
             <Input
-              placeholder="Nome de usuário"
+              placeholder="Seu e-mail"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
             />
