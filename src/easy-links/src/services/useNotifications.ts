@@ -34,7 +34,7 @@ export function useNotifications() {
 
   useEffect(() => {
     function connect() {
-      const ws = new WebSocket("ws://10.24.12.252:8080");
+      const ws = new WebSocket("ws://192.168.15.116:8080");
       wsRef.current = ws;
 
       console.log("Conectando ao WebSocket…");

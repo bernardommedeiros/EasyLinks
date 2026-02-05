@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import axios from "axios";
 
-const apiUrl = 'http://localhost:3000';
+const apiUrl = 'http://192.168.15.116:3000';
 
 export default function Login() {
   const navigate = useNavigate();

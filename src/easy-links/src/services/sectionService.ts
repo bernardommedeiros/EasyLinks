@@ -1,6 +1,6 @@
 import { db } from "@/firebase";
 import {
-  collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, query, where
+  collection, addDoc, getDocs, doc, getDoc, updateDoc, setDoc, serverTimestamp, deleteDoc, query, where
 } from "firebase/firestore";
 
 const COLLECTION = "sections";
@@ -17,7 +17,16 @@ export async function listSections() {
 }
 
 export async function createSection(data: any) {
-  return addDoc(collection(db, COLLECTION), data);
+  const ref = await addDoc(collection(db, COLLECTION), data);
+
+  await setDoc(doc(db, "stats", "sections", "data", ref.id), {
+    totalLinks: 0,
+    totalTags: 0,
+    totalAccesses: 0,
+    updatedAt: serverTimestamp(),
+  });
+
+  return ref;
 }
 
 export async function getSection(id: string): Promise<Section | null> {
