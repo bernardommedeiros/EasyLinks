@@ -20,7 +20,7 @@ export default function Home() {
 
   useEffect(() => {
     async function load() {
-      const data = await listSections();''
+      const data = await listSections();
       setSections(data as SectionInfo[]);
       setLoading(false);
     }

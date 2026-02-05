@@ -3,49 +3,91 @@ const amqp = require("amqplib");
 const { WebSocketServer } = require("ws");
 const admin = require("firebase-admin");
 const cors = require("cors");
+const dgram = require("dgram");
 
 const app = express();
 
-app.use(cors({
-  origin: "*",
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type"],
-}));
-
+app.use(cors({ origin: "*" }));
 app.use(express.json());
 
-let serviceAccount;
-try {
-  serviceAccount = require("./serviceAccountKey.json");
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-  });
-  console.log("Firebase ok");
-} catch (err) {
-  console.error("erro firebase:", err);
-  process.exit(1);
-}
+const serviceAccount = require("./serviceAccount.json");
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
 
 const db = admin.firestore();
+console.log("🔥 Firebase conectado");
 
-const RABBIT_URL = "amqp://guest:guest@10.24.12.252:5672";
+/* =======================
+   UDP CLIENT (MÉTRICAS)
+======================= */
+const UDP_HOST = "127.0.0.1";
+const UDP_PORT = 5000;
+
+function sendUdp(command) {
+  return new Promise((resolve, reject) => {
+    const client = dgram.createSocket("udp4");
+
+    const timeout = setTimeout(() => {
+      client.close();
+      reject(new Error("udp_timeout"));
+    }, 2000);
+
+    client.send(Buffer.from(command), UDP_PORT, UDP_HOST);
+
+    client.on("message", (msg) => {
+      clearTimeout(timeout);
+      client.close();
+      resolve(JSON.parse(msg.toString()));
+    });
+  });
+}
+
+/* =======================
+   METRICS ROUTES
+======================= */
+app.get("/metrics/ping", async (_, res) => {
+  try {
+    res.json(await sendUdp("PING"));
+  } catch {
+    res.status(500).json({ pong: false });
+  }
+});
+
+app.get("/metrics", async (_, res) => {
+  try {
+    res.json(await sendUdp("METRICS"));
+  } catch {
+    res.status(500).json({ error: "metrics_unavailable" });
+  }
+});
+
+app.get("/metrics/:sectionId", async (req, res) => {
+  try {
+    res.json(await sendUdp(`SECTION_METRICS:${req.params.sectionId}`));
+  } catch {
+    res.status(500).json({ error: "section_metrics_unavailable" });
+  }
+});
+
+/* =======================
+   RABBIT + WEBSOCKET
+======================= */
+const RABBIT_URL = "amqp://localhost:5672";
 const EXCHANGE = "table_updates";
 
-let rabbitConnection = null;
 let rabbitChannel = null;
 
-console.log("Iniciando WebSocket na porta 8080…");
-
-const wss = new WebSocketServer({ port: 8080, host: "0.0.0.0", });
-
-wss.on("listening", () => {
-  console.log("WebSocket rodando na 8080");
+const wss = new WebSocketServer({
+  port: 8080,
+  host: "0.0.0.0",
 });
 
 function broadcast(msg) {
   const str = JSON.stringify(msg);
-  wss.clients.forEach((client) => {
-    if (client.readyState === 1) client.send(str);
+  wss.clients.forEach((c) => {
+    if (c.readyState === 1) c.send(str);
   });
 }
 
@@ -54,63 +96,26 @@ async function connectRabbit() {
 
   while (true) {
     try {
-      console.log("Conectando ao RabbitMQ em:", RABBIT_URL);
-
-      rabbitConnection = await amqp.connect(RABBIT_URL);
-      rabbitChannel = await rabbitConnection.createChannel();
-
+      const conn = await amqp.connect(RABBIT_URL);
+      rabbitChannel = await conn.createChannel();
       await rabbitChannel.assertExchange(EXCHANGE, "fanout", { durable: false });
-
-      console.log("RabbitMQ conectado!");
+      console.log("🐰 RabbitMQ conectado");
       return;
-    } catch (err) {
-      console.error("❌ Erro conectando ao RabbitMQ. Tentando novamente em 3s…");
-      await new Promise((res) => setTimeout(res, 3000));
+    } catch {
+      console.log("RabbitMQ indisponível, tentando novamente...");
+      await new Promise((r) => setTimeout(r, 3000));
     }
   }
 }
-
-function cleanUndefined(obj) {
-  const cleaned = {};
-  for (const key in obj) {
-    if (obj[key] !== undefined && obj[key] !== null) {
-      cleaned[key] = obj[key];
-    }
-  }
-  return cleaned;
-}
-
-function buildDiff(beforeRow, afterRow) {
-  const changedFields = {};
-  for (const key in afterRow) {
-    if (beforeRow[key] !== afterRow[key]) {
-      changedFields[key] = {
-        before: beforeRow[key],
-        after: afterRow[key],
-      };
-    }
-  }
-  return changedFields;
-}
-
-let isWorkerRunning = false;
 
 async function consumeUpdates() {
-  if (isWorkerRunning) {
-    console.log("Worker já está rodando. Ignorando segunda chamada.");
-    return;
-  }
-
-  isWorkerRunning = true;
-
   await connectRabbit();
 
-  const QUEUE_NAME = "table_updates_queue";
+  const q = await rabbitChannel.assertQueue("table_updates_queue", {
+    durable: true,
+  });
 
-  const q = await rabbitChannel.assertQueue(QUEUE_NAME, { durable: true });
-  await rabbitChannel.bindQueue(QUEUE_NAME, EXCHANGE, "");
-
-  console.log("Worker ouvindo mensagens do RabbitMQ…");
+  await rabbitChannel.bindQueue(q.queue, EXCHANGE, "");
 
   rabbitChannel.consume(
     q.queue,
@@ -118,50 +123,76 @@ async function consumeUpdates() {
       if (!msg) return;
 
       const data = JSON.parse(msg.content.toString());
-
       broadcast(data);
 
       try {
         await db.collection("notifications").add(data);
-      } catch (err) {
-        console.error("Erro ao salvar no Firestore:", err);
-      }
+      } catch {}
     },
     { noAck: true }
   );
 }
 
-async function publishTableUpdate(msg) {
-  if (!rabbitChannel) await connectRabbit();
-  rabbitChannel.publish(EXCHANGE, "", Buffer.from(JSON.stringify(msg)));
+/* =======================
+   HELPERS
+======================= */
+function cleanUndefined(obj) {
+  const out = {};
+  for (const k in obj) if (obj[k] != null) out[k] = obj[k];
+  return out;
 }
 
+function buildDiff(before, after) {
+  const diff = {};
+  for (const k in after) {
+    if (before[k] !== after[k]) {
+      diff[k] = { before: before[k], after: after[k] };
+    }
+  }
+  return diff;
+}
+
+/* =======================
+   UPDATE ROW (NÃO PERDIDO)
+======================= */
 app.post("/update-row", async (req, res) => {
   const { sectionId, rowIndex, type, rowData } = req.body;
 
   try {
     const sectionRef = db.collection("sections").doc(sectionId);
-    const snap = await sectionRef.get();
-    const sectionData = snap.data();
-    const sectionName = sectionData?.title || null;
+    const sectionSnap = await sectionRef.get();
 
-
-    if (!snap.exists) {
-      return res.status(404).json({ error: "Section not found" });
+    if (!sectionSnap.exists) {
+      return res.status(404).json({ error: "section_not_found" });
     }
 
-    const rows = snap.data().rows || [];
+    const sectionData = sectionSnap.data();
+    const sectionName = sectionData?.title || null;
+
+    const rowsRef = db.collection("sectionRows").doc(sectionId);
+    const rowsSnap = await rowsRef.get();
+    const rowsData = rowsSnap.exists ? rowsSnap.data() : { rows: [] };
+    const rows = rowsData.rows || [];
 
     const beforeRaw = rows[rowIndex] || null;
-
     const before = beforeRaw ? cleanUndefined(beforeRaw) : null;
     const after = cleanUndefined(rowData);
 
-    rows[rowIndex] = after;
+    if (type === "add") {
+      rows.push(after);
+    } else if (type === "delete") {
+      if (rowIndex >= 0 && rowIndex < rows.length) {
+        rows.splice(rowIndex, 1);
+      }
+    } else {
+      if (rowIndex >= 0 && rowIndex <= rows.length) {
+         rows[rowIndex] = after;
+      }
+    }
 
-    await sectionRef.update({ rows });
+    await rowsRef.set({ rows });
 
-    const changedFields = before ? buildDiff(before, after) : {};
+    const diff = before ? buildDiff(before, after) : {};
 
     const msg = {
       type,
@@ -170,22 +201,26 @@ app.post("/update-row", async (req, res) => {
       rowIndex,
       oldRowData: before,
       newRowData: after,
-      changedField: Object.keys(changedFields)[0] || null, 
+      changedField: Object.keys(diff)[0] || null,
       timestamp: Date.now(),
     };
 
-
-    await publishTableUpdate(msg);
+    if (rabbitChannel) {
+      rabbitChannel.publish(EXCHANGE, "", Buffer.from(JSON.stringify(msg)));
+    }
 
     res.json({ success: true });
   } catch (err) {
-    console.error("Erro update-row:", err);
+    console.error("update-row error:", err);
     res.status(500).json({ error: "failed" });
   }
 });
 
+/* =======================
+   START
+======================= */
 app.listen(3001, "0.0.0.0", () => {
-  console.log("REST na porta 3001");
+  console.log("🚀 Gateway em http://192.168.15.116:3001");
 });
 
 consumeUpdates();

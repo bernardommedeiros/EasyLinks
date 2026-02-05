@@ -15,6 +15,8 @@ import * as tableService from "@/services/tableService";
 
 import { useNotifications } from "@/services/useNotifications";
 import { NotificationsBell } from "@/components/NotificationsBell";
+import {MetricsDashboard} from "@/components/MetricsDashboard";
+import { updateSectionStats } from "@/services/statsService";
 
 export type LinkRow = {
   name: string;
@@ -51,6 +53,25 @@ export default function SectionPage() {
     loadSection();
   }, [id]);
 
+    useEffect(() => {
+    if (!id) return;
+
+    updateSectionStats(id, {
+      totalAccesses: 1,
+    });
+
+    const userKey = `section_user_${id}`;
+
+    if (!localStorage.getItem(userKey)) {
+      localStorage.setItem(userKey, "true");
+
+      updateSectionStats(id, {
+        totalUsers: 1,
+      });
+    }
+  }, [id]);
+
+
   useEffect(() => {
     if (!copiedLink) return;
     const timer = setTimeout(() => setCopiedLink(null), 2000);
@@ -62,7 +83,7 @@ export default function SectionPage() {
   const notifyBackend = async (type: string, rowIndex: number, rowData: any) => {
     if (!id) return;
 
-    await fetch("http://10.24.12.252:3001/update-row", {
+    await fetch("http://192.168.15.116:3001/update-row", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -195,6 +216,7 @@ export default function SectionPage() {
 
         </Table>
       </LinkSection>
+      <MetricsDashboard sectionId={id} />
       <div className="mt-8 max-w-5xl mx-auto">
       <Link
         to="/"
