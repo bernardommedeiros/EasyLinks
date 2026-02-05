@@ -1,10 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, LogOut } from "lucide-react";
 import { listSections, removeSection } from "@/services/sectionService";
 import { NotificationsBell } from "@/components/NotificationsBell";
 import { useNotifications } from "@/services/useNotifications";
+import { useAuth } from "@/context/AuthContext";
 
 type SectionInfo = {
   id: string;
@@ -17,6 +18,7 @@ export default function Home() {
   const [sections, setSections] = useState<SectionInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const { notifications, alert } = useNotifications();
+  const { logout } = useAuth();
 
   useEffect(() => {
     async function load() {
@@ -40,7 +42,21 @@ export default function Home() {
     <div className="p-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Minhas Seções</h1>
-        <NotificationsBell notifications={notifications} />
+        <div className="flex items-center gap-2">
+          <NotificationsBell notifications={notifications} />
+          <Button 
+          className="cursor-pointer"
+            variant="ghost" 
+            size="icon" 
+            onClick={() => {
+              logout();
+              navigate("/login");
+            }}
+            title="Sair"
+          >
+            <LogOut className="h-5 w-5" />
+          </Button>
+        </div>
       </div>
 
       {sections.length === 0 ? (
