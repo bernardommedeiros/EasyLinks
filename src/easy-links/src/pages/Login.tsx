@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import axios from "axios";
 
-const apiUrl = 'http://192.168.15.116:3000';
+const apiUrl = 'http://10.24.5.32:3000';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -34,7 +34,7 @@ export default function Login() {
       // salva JWT no contexto
       login(res.data.token, username);
 
-      navigate("/enquetes");
+      navigate("/home");
     } catch (err: any) {
       console.error("LOGIN ERROR ", err);
 

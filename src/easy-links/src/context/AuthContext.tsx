@@ -15,6 +15,7 @@ interface AuthContextType {
   token: string | null;
   user: User | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
   login: (token: string, username: string) => void;
   logout: () => void;
 }
@@ -26,6 +27,7 @@ const AuthContext = createContext<AuthContextType>(
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   // 🔄 restaura sessão ao recarregar
   useEffect(() => {
@@ -39,6 +41,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         "Authorization"
       ] = `Bearer ${storedToken}`;
     }
+    setIsLoading(false);
   }, []);
 
   const login = (token: string, username: string) => {
@@ -49,7 +52,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       "Authorization"
     ] = `Bearer ${token}`;
 
-    setToken(token);
+    setToken(token)
     setUser({ username });
   };
 
@@ -66,6 +69,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         token,
         user,
         isAuthenticated: !!token,
+        isLoading,
         login,
         logout,
       }}
