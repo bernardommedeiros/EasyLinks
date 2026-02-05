@@ -31,6 +31,7 @@ export default function SectionPage() {
   const [isAdding, setIsAdding] = useState(false);
   const [sectionInfo, setSectionInfo] = useState<{ title: string; description?: string } | null>(null);
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const { notifications, alert } = useNotifications();
@@ -78,12 +79,18 @@ export default function SectionPage() {
     return () => clearTimeout(timer);
   }, [copiedLink]);
 
+  useEffect(() => {
+    if (!errorMsg) return;
+    const timer = setTimeout(() => setErrorMsg(null), 3000);
+    return () => clearTimeout(timer);
+  }, [errorMsg]);
+
   if (loading) return <p className="text-center mt-8">Carregando...</p>;
 
   const notifyBackend = async (type: string, rowIndex: number, rowData: any) => {
     if (!id) return;
 
-    await fetch("http://192.168.15.116:3001/update-row", {
+    return fetch("http://192.168.15.116:3001/update-row", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -97,6 +104,19 @@ export default function SectionPage() {
 
   const sendUpdate = async (rowIndex: number, newRow: LinkRow, type = "update") => {
     if (!id) return;
+
+    try {
+      const response = await notifyBackend(type, rowIndex, newRow);
+      
+      if (!response || !response.ok) {
+        const data = await response?.json().catch(() => ({}));
+        setErrorMsg(data.reason ? `Link inválido: ${data.reason}` : "Erro ao validar dados");
+        return;
+      }
+    } catch {
+      setErrorMsg("Erro de conexão com o servidor");
+      return;
+    }
 
     const local = [...rows];
 
@@ -119,8 +139,6 @@ export default function SectionPage() {
     } else if (type === "delete") {
       await tableService.removeTableRow(id, rowIndex);
     }
-
-    notifyBackend(type, rowIndex, newRow);
   };
 
   return (
@@ -133,6 +151,18 @@ export default function SectionPage() {
             <div>
               <AlertTitle>Link copiado!</AlertTitle>
               <AlertDescription>{copiedLink}</AlertDescription>
+            </div>
+          </Alert>
+        </div>
+      )}
+
+      {errorMsg && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 max-w-md w-full">
+          <Alert className="flex items-center gap-2 bg-red-800 text-white p-4 rounded-md">
+             <div className="text-red-300 font-bold">X</div>
+            <div>
+              <AlertTitle>Erro</AlertTitle>
+              <AlertDescription>{errorMsg}</AlertDescription>
             </div>
           </Alert>
         </div>
