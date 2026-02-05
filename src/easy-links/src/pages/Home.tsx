@@ -51,12 +51,9 @@ export default function Home() {
             <li
               key={s.id}
               onClick={() => navigate(`/section/${s.id}`)}
-              className="flex items-center justify-between p-4 border rounded-md hover:bg-gray-10"
+              className="flex items-center justify-between p-4 border rounded-md hover:bg-gray-100 cursor-pointer"
             >
-              <div
-                className="cursor-pointer"
-                onClick={() => navigate(`/section/${s.id}`)}
-              >
+              <div>
                 <h2 className="font-semibold">{s.title}</h2>
                 <p className="text-sm text-gray-600">{s.description}</p>
               </div>
@@ -65,7 +62,10 @@ export default function Home() {
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => navigate(`/section/${s.id}/edit`)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/section/${s.id}/edit`);
+                  }}
                 >
                   <Pencil className="w-4 h-4" />
                 </Button>
@@ -73,8 +73,11 @@ export default function Home() {
                 <Button
                   variant="outline"
                   size="icon"
-                  className="border-color-red hover:bg-red-100 border border-red-500 text-red-600"
-                  onClick={() => handleDelete(s.id)}
+                  className="border border-red-500 text-red-600 hover:bg-red-100"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(s.id);
+                  }}
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
